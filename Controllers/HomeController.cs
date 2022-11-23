@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using PRUEBAPRACTICA.Data;
 using PRUEBAPRACTICA.Models;
 using System;
 using System.Collections.Generic;
@@ -13,14 +15,29 @@ namespace PRUEBAPRACTICA.Controllers
     {
         private readonly ILogger<HomeController> _logger;
 
-        public HomeController(ILogger<HomeController> logger)
+        private PruebaContext _context;
+
+        public HomeController(ILogger<HomeController> logger, PruebaContext context)
         {
             _logger = logger;
+            _context = context;
         }
 
         public IActionResult Index()
         {
-            return View();
+
+            var resultado = _context.puschases.Include(x => x.customer)
+                                .Include(x => x.cars).ToList()
+                                .Select(x => new ReporteDTO
+                                {
+                                    Nombre = $"{x.customer.firstname} {x.customer.lastName}",
+                                    Fecha = x.Date,
+                                    PrecioVenta = x.Price,
+                                    Precio = x.cars.Price,
+                                    caracteristicas = $"color: {x.cars.Color} año: { x.cars.Year }, modelo: {x.cars.Make}- {x.cars.Year}"
+                                });
+
+            return View(resultado);
         }
 
         public IActionResult Privacy()
